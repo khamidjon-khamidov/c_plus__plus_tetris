@@ -10,7 +10,7 @@ int main() {
 //    cin >> width;
 //    cout << "Enter screen height: ";
 //    cin >> height;
-    width = 50;
+    width = 60;
     height = 30;
     Tetris game(width, height);
     game.run();

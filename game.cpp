@@ -9,38 +9,26 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define KEY_UP    65
+#define KEY_LEFT  68
+#define KEY_RIGHT 67
+#define KEY_DOWN  66
+
 using namespace std;
 namespace fs = std::filesystem;
 
 Tetris::Tetris(int w, int h) : width(w), height(h) {
     initialize();
-}
-
-void Tetris::loadFigures(const string& directory) {
-    for (const auto& entry : fs::directory_iterator(directory)) {
-        ifstream file(entry.path());
-        if (file) {
-            Block block;
-            string line;
-            while (getline(file, line)) {
-                vector<int> row;
-                for (char c : line) {
-                    if (c == '0' || c == '1') {
-                        row.push_back(c - '0');
-                    }
-                }
-                block.shape.push_back(row);
-            }
-            blocks.push_back(block);
-        }
-    }
+    createBlock();
 }
 
 void Tetris::initialize() {
     loadFigures("figures");
 
     screen = vector<vector<int>>(height, vector<int>(width, 0));
+}
 
+void Tetris::createBlock() {
     random_device rd;
     mt19937 gen(rd());
     uniform_int_distribution<> dis(0, blocks.size() - 1);
@@ -50,29 +38,45 @@ void Tetris::initialize() {
 }
 
 void Tetris::run() {
-    setBufferedInput(false);
+    auto startTime = chrono::steady_clock::now();
     while (true) {
         clearScreen();
         draw();
-        update();
 
-        this_thread::sleep_for(chrono::milliseconds(1000));
+        bool moved = false;
+
+        while (chrono::steady_clock::now() - startTime < chrono::seconds(1)) {
+            if (kbhit()) {
+                char key = getchar();
+                if (key == KEY_LEFT) {
+                    moved = moveLeft();
+                } else if (key == KEY_RIGHT) {
+                    moved = moveRight();
+                } else if (key == KEY_UP) {
+                    moved = rotateBlock();
+                } else if (key == KEY_DOWN) {
+                    break;
+                }
+                if (moved) break;
+            }
+            this_thread::sleep_for(chrono::milliseconds(10));
+        }
+
+        startTime = chrono::steady_clock::now();
+
+
+        if (!checkCollision(blockX, blockY + 1, currentBlock.shape)) {
+            if (!moved) blockY++;
+        } else {
+            placeBlock();
+            createBlock();
+//            initialize();
+        }
     }
-    setBufferedInput(true);
 }
 
 void Tetris::draw() {
     vector<vector<int>> tempScreen = screen;
-
-    for (int i = 0; i < width; ++i) {
-        tempScreen[0][i] = 1;
-        tempScreen[height - 1][i] = 1;
-    }
-
-    for (int i = 0; i < height; ++i) {
-        tempScreen[i][0] = 1;
-        tempScreen[i][width - 1] = 1;
-    }
 
     for (int i = 0; i < currentBlock.shape.size(); ++i) {
         for (int j = 0; j < currentBlock.shape[0].size(); ++j) {
@@ -82,47 +86,19 @@ void Tetris::draw() {
         }
     }
 
-    for (int i = 0; i < height; ++i) {
-        for (int j = 0; j < width; ++j) {
-            if (tempScreen[i][j] == 1) {
-                if (i == 0 || i == height - 1) {
-                    cout << "-";
-                } else if (j == 0 || j == width - 1) {
-                    cout << "|";
-                } else {
-                    cout << "#";
-                }
+    for (int i = -1; i < height + 1; ++i) {
+        for (int j = -1; j < width + 1; ++j) {
+            if (i == -1 || i == height) {
+                cout << "-";
+            } else if (j == -1 || j == width) {
+                cout << "|";
+            } else if (tempScreen[i][j] == 1) {
+                cout << "#";
             } else {
-                if (i == 0 || i == height - 1) {
-                    cout << "-";
-                } else if (j == 0 || j == width - 1) {
-                    cout << "|";
-                } else {
-                    cout << " ";
-                }
+                cout << " ";
             }
         }
         cout << endl;
-    }
-}
-
-void Tetris::update() {
-    if (kbhit()) {
-        char key = getchar();
-        if (key == 68) {
-            moveLeft();
-        } else if (key == 67) {
-            moveRight();
-        } else if (key == 72) {
-            rotateBlock();
-        }
-    }
-
-    if (!checkCollision(blockX, blockY + 1, currentBlock.shape)) {
-        blockY++;
-    } else {
-        placeBlock();
-        initialize();
     }
 }
 
@@ -130,19 +106,23 @@ void Tetris::clearScreen() {
     cout << "\033[2J\033[H";
 }
 
-void Tetris::moveLeft() {
+bool Tetris::moveLeft() {
     if (!checkCollision(blockX - 1, blockY, currentBlock.shape)) {
         blockX--;
+        return true;
     }
+    return false;
 }
 
-void Tetris::moveRight() {
+bool Tetris::moveRight() {
     if (!checkCollision(blockX + 1, blockY, currentBlock.shape)) {
         blockX++;
+        return true;
     }
+    return false;
 }
 
-void Tetris::rotateBlock() {
+bool Tetris::rotateBlock() {
     int originalHeight = currentBlock.shape.size();
     int originalWidth = currentBlock.shape[0].size();
 
@@ -156,7 +136,9 @@ void Tetris::rotateBlock() {
 
     if (!checkCollision(blockX, blockY, newShape)) {
         currentBlock.shape = newShape;
+        return true;
     }
+    return false;
 }
 
 bool Tetris::checkCollision(int newX, int newY, const vector<vector<int>>& newShape) {
@@ -201,24 +183,29 @@ int Tetris::kbhit() {
     tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
     fcntl(STDIN_FILENO, F_SETFL, oldf);
 
-    if(ch != EOF) {
+    if (ch != EOF) {
         ungetc(ch, stdin);
         return 1;
     }
-
     return 0;
 }
 
-void Tetris::setBufferedInput(bool enable) {
-    static termios oldt;
-    termios newt;
-
-    if (enable) {
-        tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-    } else {
-        tcgetattr(STDIN_FILENO, &oldt);
-        newt = oldt;
-        newt.c_lflag &= ~(ICANON | ECHO);
-        tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+void Tetris::loadFigures(const string& directory) {
+    for (const auto& entry : fs::directory_iterator(directory)) {
+        ifstream file(entry.path());
+        if (file) {
+            Block block;
+            string line;
+            while (getline(file, line)) {
+                vector<int> row;
+                for (char c : line) {
+                    if (c == '0' || c == '1') {
+                        row.push_back(c - '0');
+                    }
+                }
+                block.shape.push_back(row);
+            }
+            blocks.push_back(block);
+        }
     }
 }

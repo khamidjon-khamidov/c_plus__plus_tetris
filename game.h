@@ -25,12 +25,13 @@ private:
     int blockX, blockY;
 
     void initialize();
+    void createBlock();
     void draw();
     void update();
     void clearScreen();
-    void moveLeft();
-    void moveRight();
-    void rotateBlock();
+    bool moveLeft();
+    bool moveRight();
+    bool rotateBlock();
     bool checkCollision(int newX, int newY, const vector<vector<int>>& newShape);
     void placeBlock();
     int kbhit();
