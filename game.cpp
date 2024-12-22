@@ -35,11 +35,15 @@ void Tetris::createBlock() {
     currentBlock = blocks[dis(gen)];
     blockX = width / 2 - currentBlock.shape[0].size() / 2;
     blockY = 0;
+
+    if (checkInitialCollision(blockX, blockY, currentBlock.shape)) {
+        gameOver = true;
+    }
 }
 
 void Tetris::run() {
     auto startTime = chrono::steady_clock::now();
-    while (true) {
+    while (!gameOver) {
         clearScreen();
         draw();
 
@@ -64,15 +68,16 @@ void Tetris::run() {
 
         startTime = chrono::steady_clock::now();
 
-
         if (!checkCollision(blockX, blockY + 1, currentBlock.shape)) {
             if (!moved) blockY++;
         } else {
             placeBlock();
             createBlock();
-//            initialize();
         }
     }
+
+    clearScreen();
+    cout << "Game Over" << endl;
 }
 
 void Tetris::draw() {
@@ -164,6 +169,21 @@ void Tetris::placeBlock() {
             }
         }
     }
+}
+
+bool Tetris::checkInitialCollision(int startX, int startY, const vector<vector<int>>& shape) {
+    for (int i = 0; i < shape.size(); ++i) {
+        for (int j = 0; j < shape[0].size(); ++j) {
+            if (shape[i][j] == 1) {
+                int x = startX + j;
+                int y = startY + i;
+                if (screen[y][x] == 1) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
 
 int Tetris::kbhit() {

@@ -19,11 +19,13 @@ public:
 private:
     int width;
     int height;
+    bool gameOver = false;
     vector<Block> blocks;
     vector<vector<int>> screen;
     Block currentBlock;
     int blockX, blockY;
 
+    bool checkInitialCollision(int startX, int startY, const vector<vector<int>>& shape);
     void initialize();
     void createBlock();
     void draw();
