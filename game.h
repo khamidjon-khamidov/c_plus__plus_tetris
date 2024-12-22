@@ -24,6 +24,7 @@ private:
     void initialize();
     void draw();
     void update();
+    void clearScreen();
 };
 
 #endif

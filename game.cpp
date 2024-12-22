@@ -42,7 +42,8 @@ void Tetris::run() {
         draw();
         update();
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        this_thread::sleep_for(chrono::milliseconds(1000));
+        clearScreen();
     }
 }
 
@@ -52,4 +53,8 @@ void Tetris::draw() {
 
 void Tetris::update() {
     cout << "Updating game state..." << endl;
+}
+
+void Tetris::clearScreen() {
+    cout << "\033[2J\033[H";
 }
