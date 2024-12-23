@@ -37,7 +37,9 @@ private:
     bool checkCollision(int newX, int newY, const vector<vector<int>>& newShape);
     void placeBlock();
     int kbhit();
-    void setBufferedInput(bool enable);
+    bool isLineFull(int lineIndex);
+    void removeLine(int lineIndex);
+    void shiftLinesDown(int startLine);
 };
 
 #endif

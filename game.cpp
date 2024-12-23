@@ -98,7 +98,7 @@ void Tetris::draw() {
             } else if (j == -1 || j == width) {
                 cout << "|";
             } else if (tempScreen[i][j] == 1) {
-                cout << "#";
+                cout << "▒";
             } else {
                 cout << " ";
             }
@@ -168,6 +168,41 @@ void Tetris::placeBlock() {
                 screen[blockY + i][blockX + j] = 1;
             }
         }
+    }
+
+    for (int i = 0; i < height; ++i) {
+        if (isLineFull(i)) {
+            removeLine(i);
+            shiftLinesDown(i);
+            i--;
+        }
+    }
+}
+
+bool Tetris::isLineFull(int lineIndex) {
+    for (int j = 0; j < width; ++j) {
+        if (screen[lineIndex][j] == 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void Tetris::removeLine(int lineIndex) {
+    for (int j = 0; j < width; ++j) {
+        screen[lineIndex][j] = 0;
+    }
+}
+
+void Tetris::shiftLinesDown(int startLine) {
+    for (int i = startLine; i > 0; --i) {
+        for (int j = 0; j < width; ++j) {
+            screen[i][j] = screen[i - 1][j];
+        }
+    }
+
+    for (int j = 0; j < width; ++j) {
+        screen[0][j] = 0;
     }
 }
 
