@@ -4,16 +4,20 @@
 
 using namespace std;
 
+void waitForAnyKey() {
+    cout << "Press any key to start the game..." << endl;
+    getchar();
+}
+
 int main() {
-    int width, height;
-//    cout << "Enter screen width: ";
-//    cin >> width;
-//    cout << "Enter screen height: ";
-//    cin >> height;
-    width = 30;
-    height = 15;
+    int width = 30;
+    int height = 15;
+
+    waitForAnyKey();
+
     Tetris game(width, height);
     game.run();
 
     return 0;
 }
+
