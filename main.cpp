@@ -23,8 +23,8 @@ void waitForAnyKey() {
 }
 
 int main(int argc, char* argv[]) {
-    int width = 30;
-    int height = 15;
+    int width = 60;
+    int height = 30;
 
     for (int i = 1; i < argc; ++i) {
         if (strcmp(argv[i], "--help") == 0) {
